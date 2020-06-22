@@ -80,6 +80,14 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Images\snake_down.png" />
+    <EmbeddedResource Include="Images\snake_left.png" />
+    <EmbeddedResource Include="Images\snake_up.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Images\apple.png" />
+    <EmbeddedResource Include="Images\snake_right.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

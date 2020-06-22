@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -37,8 +36,6 @@ namespace Game.Snake
         //Отрисовка игрового поля
         private void GameFieldPictureBoxOnPaint(object sender, PaintEventArgs paintEventArgs)
         {
-            var exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var imgDir = Path.Combine(exeDir, "Images");
 
             Graphics graphics = paintEventArgs.Graphics;
 
@@ -54,7 +51,8 @@ namespace Game.Snake
             {
                 if(snake.Count == 1)
                 {
-                    Image snakeImage = Image.FromFile(Path.Combine(imgDir, "snake_right.png"));
+                    Image snakeImage = new Bitmap(Assembly.GetEntryAssembly().
+                        GetManifestResourceStream("Game.Snake.Images.snake_right.png"));
                     TextureBrush tBrushSnake = new TextureBrush(snakeImage);
                     tBrushSnake.Transform = new Matrix(
                     30.0f / 225.0f,
@@ -70,16 +68,17 @@ namespace Game.Snake
             }
 
             //Рисуем еду 
-            Image foodImage = Image.FromFile(Path.Combine(imgDir, "apple.jpg"));
-            TextureBrush tBrush = new TextureBrush(foodImage);
-            tBrush.Transform = new Matrix(
-            30.0f / 211.0f,
+            Image foodImage = new Bitmap(Assembly.GetEntryAssembly().
+                GetManifestResourceStream("Game.Snake.Images.apple.png"));
+            TextureBrush tBrushFood = new TextureBrush(foodImage);
+            tBrushFood.Transform = new Matrix(
+            30.0f / 472.0f,
             0.0f,
             0.0f,
-            30.0f / 239.0f,
+            30.0f / 500.0f,
             0.0f,
             0.0f);
-            graphics.FillRectangle(tBrush, GetRandomEmptyCell());
+            graphics.FillRectangle(tBrushFood, GetRandomEmptyCell());
         }
 
         //Возвращает случайную клетку поля
