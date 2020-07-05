@@ -12,82 +12,66 @@ namespace Game.Snake
         private const int GameFieldSize = 450;
         private const int GameFieldSizeInCells = 15;
         private Image foodImg = Image.FromFile("Images/apple.png");
-        private Image snakeImg;
         private Image snakeImgRight = Image.FromFile("Images/snake_right.png");
         private Image snakeImgUp = Image.FromFile("Images/snake_up.png");
         private Image snakeImgLeft = Image.FromFile("Images/snake_left.png");
         private Image snakeImgDown = Image.FromFile("Images/snake_down.png");
         private readonly Random random = new Random();
 
-        private readonly List<Rectangle> snake = new List<Rectangle>();
+        private readonly List<Point> snake = new List<Point>();
+        private Point snakeHead => snake[0];
         private Direction direction;
-        private Rectangle food;
+        private Point food;
         private bool isPause;
 
-        //Установка начальных параметров игры
+        public int SnakeLength => snake.Count;
+
         public void Restart()
         {
             direction = Direction.Right;
-            snakeImg = snakeImgRight;
             snake.Clear();
             snake.Add(GetRandomEmptyCell());
             food = GetRandomEmptyCell();
             isPause = true;
         }
 
-        //Отрисовка игрового поля
         public void Draw(Graphics graphics)
         {
-            //Рисуем клетки
-            for (int i = CellSize; i < GameFieldSize; i += CellSize)
+            for (int i = 0; i < GameFieldSizeInCells; i++)
             {
-                graphics.DrawLine(Pens.Gray, 0, i, GameFieldSize, i);
-                graphics.DrawLine(Pens.Gray, i, 0, i, GameFieldSize);
+                graphics.DrawLine(Pens.Gray, 0, i * CellSize, GameFieldSize, i * CellSize);
+                graphics.DrawLine(Pens.Gray, i * CellSize, 0, i * CellSize, GameFieldSize);
             }
 
-            //Рисуем змейку
-            graphics.DrawImage(snakeImg, snake[0]);
+            graphics.DrawImage(GetSnakeImg(), new Rectangle(snakeHead.X * CellSize, snakeHead.Y * CellSize, CellSize, CellSize));
+
             for (int i = 1; i < snake.Count; i++)
             {
-                graphics.FillRectangle(Brushes.Chartreuse, snake[i]);
+                graphics.FillRectangle(Brushes.Chartreuse, new Rectangle(snake[i].X * CellSize, snake[i].Y * CellSize, CellSize, CellSize));
             }
 
-            //Рисуем еду 
-            graphics.DrawImage(foodImg, food);
+            graphics.DrawImage(foodImg, new Rectangle(food.X * CellSize, food.Y * CellSize, CellSize, CellSize));
         }
 
-        //Изменение направления движения змейки
         public void ChangeDirection(Keys key)
         {
             switch(key)
             {
                 case Keys.Left:
-                    if (snake.Count == 1 || direction != Direction.Right)
-                    {
+                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Left))
                         direction = Direction.Left;
-                        snakeImg = snakeImgLeft;
-                    }
                     break;
                 case Keys.Up:
-                    if (snake.Count == 1 || direction != Direction.Down)
-                    {
+                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Up))
                         direction = Direction.Up;
-                        snakeImg = snakeImgUp;
-                    }
                     break;
                 case Keys.Right:
-                    if (snake.Count == 1 || direction != Direction.Left)
-                    {
+                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Right))
                         direction = Direction.Right;
-                        snakeImg = snakeImgRight;
-                    }
                     break;
                 case Keys.Down:
-                    if (snake.Count == 1 || direction != Direction.Up)
-                    {
+                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Down))
                         direction = Direction.Down;
-                        snakeImg = snakeImgDown;
-                    }
                     break;
             }
 
@@ -97,10 +81,8 @@ namespace Game.Snake
             }
         }
 
-        //Движение змейки
-        public void Move(out int snakeLength, out bool gameOver)
+        public void Move(out bool gameOver)
         {
-            snakeLength = 1;
             gameOver = false;
             if (isPause)
                 return;
@@ -111,27 +93,24 @@ namespace Game.Snake
             switch (direction)
             {
                 case Direction.Right:
-                    snakeDeltaX = CellSize;
+                    snakeDeltaX = 1;
                     snakeDeltaY = 0;
                     break;
                 case Direction.Up:
                     snakeDeltaX = 0;
-                    snakeDeltaY = -CellSize;
+                    snakeDeltaY = -1;
                     break;
                 case Direction.Left:
-                    snakeDeltaX = -CellSize;
+                    snakeDeltaX = -1;
                     snakeDeltaY = 0;
                     break;
                 case Direction.Down:
                     snakeDeltaX = 0;
-                    snakeDeltaY = CellSize;
+                    snakeDeltaY = 1;
                     break;
             }
 
-            Rectangle nextHeadPosition = new Rectangle(
-                snake[0].X + snakeDeltaX,
-                snake[0].Y + snakeDeltaY,
-                CellSize, CellSize);
+            Point nextHeadPosition = new Point(snakeHead.X + snakeDeltaX, snakeHead.Y + snakeDeltaY);
 
             // Голова змейки всегда возникает на следующей клетке
             snake.Insert(0, nextHeadPosition);
@@ -139,23 +118,21 @@ namespace Game.Snake
                 snake.RemoveAt(snake.Count - 1);
             else food = GetRandomEmptyCell();
 
-            if (GetOutOfTheField(snake[0].X, snake[0].Y) || EatMyself(snake[0].X, snake[0].Y))
+            if (IsPointOutsideField(snakeHead.X, snakeHead.Y) || IsSnakeEatItself())
             {
                 isPause = true;
                 gameOver = true;
             }
-            snakeLength = snake.Count;
         }
 
-        //Возвращает случайную клетку поля
-        Rectangle GetRandomEmptyCell()
+        private Point GetRandomEmptyCell()
         {
-            List<Rectangle> emptyCells = new List<Rectangle>();
+            List<Point> emptyCells = new List<Point>();
             for (int i = 0; i < GameFieldSizeInCells; i++)
             {
                 for (int j = 0; j < GameFieldSizeInCells; j++)
                 {
-                    Rectangle emptyCell = new Rectangle(i * CellSize, j * CellSize, CellSize, CellSize);
+                    Point emptyCell = new Point(i , j);
                     if (!snake.Contains(emptyCell))
                         emptyCells.Add(emptyCell);
                 }
@@ -163,21 +140,30 @@ namespace Game.Snake
             return emptyCells[random.Next(0, emptyCells.Count - 1)];
         }
 
-        #region Проверки
-        //Выход за границы поля
-        bool GetOutOfTheField(int x, int y)
+        private Image GetSnakeImg()
         {
-            if (x > GameFieldSize - CellSize || y > GameFieldSize - CellSize || y < 0 || x < 0)
-                return true;
-
-            return false;
+            switch (direction)
+            {
+                case Direction.Left:
+                    return snakeImgLeft;
+                case Direction.Up:
+                    return snakeImgUp;
+                case Direction.Down:
+                    return snakeImgDown;
+                default:
+                    return snakeImgRight;
+            }
         }
 
-        //Самосъедение
-        bool EatMyself(int x, int y)
+        #region Проверки
+        private bool IsPointOutsideField(int x, int y)
         {
-            int count = snake.Count(snakeSegment => snakeSegment == snake[0]);
-            return count > 1 && food != snake[0];
+            return x > GameFieldSizeInCells - 1 || y > GameFieldSizeInCells - 1 || y < 0 || x < 0;
+        }
+
+        private bool IsSnakeEatItself()
+        {
+            return snake.Skip(1).Contains(snakeHead);
         }
         #endregion
 

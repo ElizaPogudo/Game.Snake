@@ -12,13 +12,9 @@ namespace Game.Snake
             InitializeComponent();
             game.Restart();
 
-            // Подписываемся на отрисовку
             gameFieldPictureBox.Paint += GameFieldPictureBoxOnPaint;
-
-            // Подписываемся на нажатия клавиш
             KeyDown += OnKeyDown;
 
-            // Настраиваем таймер
             timer.Interval = 300; // ms
             timer.Start();
             timer.Tick += TimerOnTick;
@@ -26,24 +22,23 @@ namespace Game.Snake
 
         private void TimerOnTick(object sender, EventArgs eventArgs)
         {
-            game.Move(out int snakeLengthVal, out bool gameOver);
+            game.Move(out bool gameOver);
             if (!gameOver)
             {
-                snakeLength.Text = snakeLengthVal.ToString();
-                score.Text = (snakeLengthVal - 1).ToString();
+                snakeLength.Text = game.SnakeLength.ToString();
+                score.Text = (game.SnakeLength - 1).ToString();
                 gameFieldPictureBox.Refresh();
             }
             else
             {
                 timer.Stop();
-                MessageBox.Show(string.Format("Игра закончена!\nДлина змейки равна {0}", snakeLengthVal));
+                MessageBox.Show($"Игра закончена!\nДлина змейки равна {game.SnakeLength}");
                 game.Restart();
                 timer.Start();
             }
             
         }
 
-        //Отрисовка игрового поля
         private void GameFieldPictureBoxOnPaint(object sender, PaintEventArgs paintEventArgs)
         {
             game.Draw(paintEventArgs.Graphics);
