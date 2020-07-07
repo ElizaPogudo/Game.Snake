@@ -56,7 +56,7 @@ namespace Game.Snake
 
         public void ChangeDirection(Direction direction)
         {
-            if (snake.Count > 1 && direction == direction.ToOppositeDirection())
+            if (snake.Count > 1 && snakeDirection == direction.ToOppositeDirection())
                 return;
 
             snakeDirection = direction;
