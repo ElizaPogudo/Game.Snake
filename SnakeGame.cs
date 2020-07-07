@@ -11,24 +11,25 @@ namespace Game.Snake
         private const int CellSize = 30;
         private const int GameFieldSize = 450;
         private const int GameFieldSizeInCells = 15;
-        private Image foodImg = Image.FromFile("Images/apple.png");
-        private Image snakeImgRight = Image.FromFile("Images/snake_right.png");
-        private Image snakeImgUp = Image.FromFile("Images/snake_up.png");
-        private Image snakeImgLeft = Image.FromFile("Images/snake_left.png");
-        private Image snakeImgDown = Image.FromFile("Images/snake_down.png");
+        private Image foodImage = Image.FromFile("Images/apple.png");
+        private Image snakeImageRight = Image.FromFile("Images/snake_right.png");
+        private Image snakeImageUp = Image.FromFile("Images/snake_up.png");
+        private Image snakeImageLeft = Image.FromFile("Images/snake_left.png");
+        private Image snakeImageDown = Image.FromFile("Images/snake_down.png");
         private readonly Random random = new Random();
 
         private readonly List<Point> snake = new List<Point>();
         private Point snakeHead => snake[0];
-        private Direction direction;
+        private Direction snakeDirection;
         private Point food;
         private bool isPause;
 
         public int SnakeLength => snake.Count;
+        public event Action Defeat = delegate { };
 
         public void Restart()
         {
-            direction = Direction.Right;
+            snakeDirection = Direction.Right;
             snake.Clear();
             snake.Add(GetRandomEmptyCell());
             food = GetRandomEmptyCell();
@@ -43,54 +44,34 @@ namespace Game.Snake
                 graphics.DrawLine(Pens.Gray, i * CellSize, 0, i * CellSize, GameFieldSize);
             }
 
-            graphics.DrawImage(GetSnakeImg(), new Rectangle(snakeHead.X * CellSize, snakeHead.Y * CellSize, CellSize, CellSize));
+            graphics.DrawImage(GetSnakeImage(), snakeHead.X * CellSize, snakeHead.Y * CellSize, CellSize, CellSize);
 
             for (int i = 1; i < snake.Count; i++)
             {
-                graphics.FillRectangle(Brushes.Chartreuse, new Rectangle(snake[i].X * CellSize, snake[i].Y * CellSize, CellSize, CellSize));
+                graphics.FillEllipse(Brushes.Chartreuse, snake[i].X * CellSize, snake[i].Y * CellSize, CellSize, CellSize);
             }
 
-            graphics.DrawImage(foodImg, new Rectangle(food.X * CellSize, food.Y * CellSize, CellSize, CellSize));
+            graphics.DrawImage(foodImage, food.X * CellSize, food.Y * CellSize, CellSize, CellSize);
         }
 
-        public void ChangeDirection(Keys key)
+        public void ChangeDirection(Direction direction)
         {
-            switch(key)
-            {
-                case Keys.Left:
-                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Left))
-                        direction = Direction.Left;
-                    break;
-                case Keys.Up:
-                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Up))
-                        direction = Direction.Up;
-                    break;
-                case Keys.Right:
-                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Right))
-                        direction = Direction.Right;
-                    break;
-                case Keys.Down:
-                    if (snake.Count == 1 || !direction.IsOppositeDirection(Direction.Down))
-                        direction = Direction.Down;
-                    break;
-            }
+            if (snake.Count > 1 && direction == direction.ToOppositeDirection())
+                return;
 
-            if (isPause)
-            {
-                isPause = false;
-            }
+            snakeDirection = direction;
+            isPause = false;
         }
 
-        public void Move(out bool gameOver)
+        public void Move()
         {
-            gameOver = false;
             if (isPause)
                 return;
 
             int snakeDeltaX = 0;
             int snakeDeltaY = 0;
 
-            switch (direction)
+            switch (snakeDirection)
             {
                 case Direction.Right:
                     snakeDeltaX = 1;
@@ -121,7 +102,7 @@ namespace Game.Snake
             if (IsPointOutsideField(snakeHead.X, snakeHead.Y) || IsSnakeEatItself())
             {
                 isPause = true;
-                gameOver = true;
+                Defeat();
             }
         }
 
@@ -140,22 +121,22 @@ namespace Game.Snake
             return emptyCells[random.Next(0, emptyCells.Count - 1)];
         }
 
-        private Image GetSnakeImg()
+        private Image GetSnakeImage()
         {
-            switch (direction)
+            switch (snakeDirection)
             {
                 case Direction.Left:
-                    return snakeImgLeft;
+                    return snakeImageLeft;
+                case Direction.Right:
+                    return snakeImageRight;
                 case Direction.Up:
-                    return snakeImgUp;
+                    return snakeImageUp;
                 case Direction.Down:
-                    return snakeImgDown;
-                default:
-                    return snakeImgRight;
+                    return snakeImageDown;
+                default: throw new ArgumentOutOfRangeException();
             }
         }
 
-        #region Проверки
         private bool IsPointOutsideField(int x, int y)
         {
             return x > GameFieldSizeInCells - 1 || y > GameFieldSizeInCells - 1 || y < 0 || x < 0;
@@ -165,7 +146,7 @@ namespace Game.Snake
         {
             return snake.Skip(1).Contains(snakeHead);
         }
-        #endregion
+
 
     }
 }

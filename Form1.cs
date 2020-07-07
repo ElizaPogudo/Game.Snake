@@ -14,6 +14,7 @@ namespace Game.Snake
 
             gameFieldPictureBox.Paint += GameFieldPictureBoxOnPaint;
             KeyDown += OnKeyDown;
+            game.Defeat += Game_Defeat;
 
             timer.Interval = 300; // ms
             timer.Start();
@@ -22,21 +23,10 @@ namespace Game.Snake
 
         private void TimerOnTick(object sender, EventArgs eventArgs)
         {
-            game.Move(out bool gameOver);
-            if (!gameOver)
-            {
-                snakeLength.Text = game.SnakeLength.ToString();
-                score.Text = (game.SnakeLength - 1).ToString();
-                gameFieldPictureBox.Refresh();
-            }
-            else
-            {
-                timer.Stop();
-                MessageBox.Show($"Игра закончена!\nДлина змейки равна {game.SnakeLength}");
-                game.Restart();
-                timer.Start();
-            }
-            
+            game.Move();
+            snakeLength.Text = game.SnakeLength.ToString();
+            score.Text = (game.SnakeLength - 1).ToString();
+            gameFieldPictureBox.Refresh();
         }
 
         private void GameFieldPictureBoxOnPaint(object sender, PaintEventArgs paintEventArgs)
@@ -46,7 +36,28 @@ namespace Game.Snake
 
         private void OnKeyDown(object sender, KeyEventArgs keyEventArgs)
         {
-            game.ChangeDirection(keyEventArgs.KeyCode);
+            switch (keyEventArgs.KeyCode)
+            {
+                case Keys.Up:
+                    game.ChangeDirection(Direction.Up);
+                    break;
+                case Keys.Down:
+                    game.ChangeDirection(Direction.Down);
+                    break;
+                case Keys.Left:
+                    game.ChangeDirection(Direction.Left);
+                    break;
+                case Keys.Right:
+                    game.ChangeDirection(Direction.Right);
+                    break;
+            }
+        }
+        private void Game_Defeat()
+        {
+            timer.Stop();
+            MessageBox.Show($"Игра закончена!\nДлина змейки равна {game.SnakeLength}");
+            game.Restart();
+            timer.Start();
         }
     }
 }
